@@ -5,6 +5,8 @@ All unit tests for the newspaper library should be contained in this file.
 import sys
 import os
 import unittest
+from unittest.mock import patch
+import requests
 import time
 import traceback
 from collections import defaultdict, OrderedDict
@@ -23,7 +25,8 @@ HTML_FN = os.path.join(TEST_DIR, 'data', 'html')
 URLS_FILE = os.path.join(TEST_DIR, 'data', 'fulltext_url_list.txt')
 
 import newspaper
-from newspaper import Article, fulltext, Source, ArticleException, news_pool
+from newspaper import (Article, fulltext, Source, ArticleException, news_pool,
+                       network)
 from newspaper.configuration import Configuration
 from newspaper.urls import get_domain
 
@@ -661,6 +664,42 @@ class TestNewspaperLanguagesApi(unittest.TestCase):
     @print_test
     def test_languages_api_call(self):
         newspaper.languages()
+
+
+class NetworkTestCase(unittest.TestCase):
+
+    @patch("newspaper.network.multithread_request")
+    @patch("newspaper.network.requests.get")
+    def test_make_request_synchronous(self, mock_get, mock_multi):
+        response = requests.Response()
+        response.status_code = 200
+        mock_get.return_value = response
+        configuration = Configuration()
+        configuration.synchronous_mode = True
+        output = network.make_requests(
+            urls=[
+                "www.newspaper1.com/category1",
+                "www.newspaper2.com/category2",
+            ],
+            config=configuration
+        )
+        assert mock_get.call_count == 2
+        assert len(output) == 2
+        assert not mock_multi.called
+
+    @patch("newspaper.network.multithread_request")
+    @patch("newspaper.network.requests.get")
+    def test_make_request_asynchronous(self, mock_get, mock_multi):
+        mock_multi.return_value = [requests.Response(), requests.Response()]
+        output = network.make_requests(
+            urls=[
+                "www.newspaper1.com/category1",
+                "www.newspaper2.com/category2",
+            ],
+        )
+        assert not mock_get.called
+        assert len(output) == 2
+        assert mock_multi.call_count == 1
 
 
 if __name__ == '__main__':

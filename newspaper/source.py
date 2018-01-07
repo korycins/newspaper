@@ -143,7 +143,7 @@ class Source(object):
         common_feed_urls_as_categories = [Category(url=url) for url in common_feed_urls]
 
         category_urls = [c.url for c in common_feed_urls_as_categories]
-        requests = network.multithread_request(category_urls, self.config)
+        requests = network.make_requests(category_urls, self.config)
 
         for index, _ in enumerate(common_feed_urls_as_categories):
             response = requests[index].resp
@@ -180,7 +180,7 @@ class Source(object):
         """Download all category html, can use mthreading
         """
         category_urls = [c.url for c in self.categories]
-        requests = network.multithread_request(category_urls, self.config)
+        requests = network.make_requests(category_urls, self.config)
 
         for index, _ in enumerate(self.categories):
             req = requests[index]
@@ -197,7 +197,7 @@ class Source(object):
         """Download all feed html, can use mthreading
         """
         feed_urls = [f.url for f in self.feeds]
-        requests = network.multithread_request(feed_urls, self.config)
+        requests = network.make_requests(feed_urls, self.config)
 
         for index, _ in enumerate(self.feeds):
             req = requests[index]
@@ -345,7 +345,7 @@ class Source(object):
         urls = [a.url for a in self.articles]
         failed_articles = []
 
-        if threads == 1:
+        if threads == 1 or self.config.synchronous_mode:
             for index, article in enumerate(self.articles):
                 url = urls[index]
                 html = network.get_html(url, config=self.config)

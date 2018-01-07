@@ -131,3 +131,16 @@ def multithread_request(urls, config=None):
     pool.wait_completion()
     return m_requests
 
+
+def make_requests(urls, config=None):
+    """ Wrapper to decide which type of request should be call (multithread
+    or singlethread)
+    """
+    config = config or Configuration()
+    m_requests = []
+    if config.synchronous_mode:
+        for url in urls:
+            m_requests.append(MRequest(url, config).send())
+    else:
+        m_requests = multithread_request(urls=urls, config=config)
+    return m_requests
