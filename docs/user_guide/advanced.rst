@@ -240,6 +240,8 @@ Here is a full list of the configuration options:
 
 ``verbose``, default False, "turn this on when debugging"
 
+``synchronous_mode``, default False, "turn this on when using any asynchronous library (like Celery)"
+
 You may notice other config options in the ``newspaper/configuration.py`` file,
 however, they are private, **please do not toggle them**.
 
